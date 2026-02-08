@@ -8,19 +8,20 @@ from datetime import datetime, timezone
 from .models import TeamCamp, ChallengeCamp, CampAccessLog
 
 
-def set_config(key, value):
+def set_config(key, value, commit=True):
     """Helper pour sauvegarder une config"""
     from CTFd.models import Configs
-    
+
     config = Configs.query.filter_by(key=key).first()
     if config:
         config.value = value
     else:
         config = Configs(key=key, value=value)
         db.session.add(config)
-    
-    db.session.commit()
-    clear_config()  # Vider le cache
+
+    if commit:
+        db.session.commit()
+        clear_config()
 
 
 def can_change_camp(team_id):
@@ -30,25 +31,19 @@ def can_change_camp(team_id):
     """
     # 1. Vérifier la deadline
     deadline_str = get_config('camps_change_deadline', default='')
-    print(f"[CTFd Camps DEBUG] deadline_str from config: '{deadline_str}' (type: {type(deadline_str)})")
-    
+
     if deadline_str:
         try:
             deadline = datetime.fromisoformat(deadline_str)
-            now = datetime.now(timezone.utc)  # Utiliser UTC pour la comparaison
-            print(f"[CTFd Camps DEBUG] Deadline: {deadline}, Now: {now}, Passed: {now > deadline}")
+            now = datetime.now(timezone.utc)
             
             if now > deadline:
                 return False, "La date limite de changement de camp est dépassée"
-        except Exception as e:
-            print(f"[CTFd Camps DEBUG] Erreur parsing deadline: {e}")
+        except Exception:
             pass
-    else:
-        print(f"[CTFd Camps DEBUG] Pas de deadline configurée")
-    
+
     # 2. Vérifier si le changement est autorisé
     allow_change = get_config('camps_allow_change', default=True)
-    print(f"[CTFd Camps DEBUG] allow_change: {allow_change} (type: {type(allow_change)})")
     
     if not allow_change:
         # Si désactivé, on ne peut changer que si on n'a pas encore de camp
@@ -119,17 +114,13 @@ def load_bp():
     def camps_admin():
         """Page principale d'administration des camps"""
         
-        # Récupérer toutes les équipes avec leur camp
+        # Récupérer toutes les équipes avec leur camp en une seule requête
         teams = Teams.query.all()
-        teams_data = []
-        
-        for team in teams:
-            team_camp = TeamCamp.query.filter_by(team_id=team.id).first()
-            teams_data.append({
-                'id': team.id,
-                'name': team.name,
-                'camp': team_camp.camp if team_camp else None
-            })
+        teams_camps = {tc.team_id: tc.camp for tc in TeamCamp.query.all()}
+        teams_data = [
+            {'id': team.id, 'name': team.name, 'camp': teams_camps.get(team.id)}
+            for team in teams
+        ]
         
         # Calculer les statistiques
         blue_count = TeamCamp.query.filter_by(camp='blue').count()
@@ -204,24 +195,22 @@ def load_bp():
                     # Vérifier que c'est un format valide
                     datetime.fromisoformat(deadline.replace('Z', '+00:00'))
                 except Exception as e:
-                    print(f"[CTFd Camps] Erreur validation deadline: {e}")
                     return jsonify({'success': False, 'error': 'Format de date invalide'}), 400
             
-            # Sauvegarder la configuration
-            set_config('camps_allow_change', allow_change)
-            set_config('camps_show_public_stats', show_public_stats)
-            set_config('camps_show_challenge_badges', show_challenge_badges)
-            set_config('camps_enable_team_limits', enable_team_limits)
-            set_config('camps_max_blue_teams', int(max_blue_teams))
-            set_config('camps_max_red_teams', int(max_red_teams))
-            set_config('camps_change_deadline', deadline)
-            
-            print(f"[CTFd Camps] Configuration sauvegardée")
+            # Sauvegarder la configuration en une seule transaction
+            set_config('camps_allow_change', allow_change, commit=False)
+            set_config('camps_show_public_stats', show_public_stats, commit=False)
+            set_config('camps_show_challenge_badges', show_challenge_badges, commit=False)
+            set_config('camps_enable_team_limits', enable_team_limits, commit=False)
+            set_config('camps_max_blue_teams', int(max_blue_teams), commit=False)
+            set_config('camps_max_red_teams', int(max_red_teams), commit=False)
+            set_config('camps_change_deadline', deadline, commit=False)
+            db.session.commit()
+            clear_config()
             
             return jsonify({'success': True, 'message': 'Configuration mise à jour'})
             
         except Exception as e:
-            print(f"[CTFd Camps] Erreur lors de la sauvegarde: {e}")
             return jsonify({'success': False, 'error': str(e)}), 500
     
     @camps_bp.route('/admin/camps/team/<int:team_id>', methods=['POST'])
@@ -269,21 +258,24 @@ def load_bp():
         # Récupérer tous les logs, triés par date décroissante
         logs = CampAccessLog.query.order_by(CampAccessLog.timestamp.desc()).limit(100).all()
         
-        # Enrichir avec les noms
+        # Charger les noms en batch pour éviter N+1 queries
+        team_ids = {log.team_id for log in logs if log.team_id}
+        challenge_ids = {log.challenge_id for log in logs if log.challenge_id}
+
+        teams_map = {t.id: t.name for t in Teams.query.filter(Teams.id.in_(team_ids)).all()} if team_ids else {}
+        challenges_map = {c.id: c.name for c in Challenges.query.filter(Challenges.id.in_(challenge_ids)).all()} if challenge_ids else {}
+
         logs_data = []
         for log in logs:
-            team = Teams.query.filter_by(id=log.team_id).first()
-            challenge = Challenges.query.filter_by(id=log.challenge_id).first()
-            
             logs_data.append({
                 'id': log.id,
-                'team_name': team.name if team else f'Team #{log.team_id}',
+                'team_name': teams_map.get(log.team_id, f'Team #{log.team_id}'),
                 'team_id': log.team_id,
                 'team_camp': log.team_camp,
-                'challenge_name': challenge.name if challenge else f'Challenge #{log.challenge_id}',
+                'challenge_name': challenges_map.get(log.challenge_id, f'Challenge #{log.challenge_id}'),
                 'challenge_id': log.challenge_id,
                 'challenge_camp': log.challenge_camp,
-                'request_info': log.ip_address or '',  # Contient METHOD URL (IP: xxx)
+                'request_info': log.ip_address or '',
                 'timestamp': log.timestamp.strftime('%d/%m/%Y %H:%M:%S')
             })
         
@@ -419,14 +411,11 @@ def load_bp():
                 message = f'Vous avez rejoint le camp {camp}'
             
             db.session.commit()
-            
-            print(f"[CTFd Camps] Équipe {team.name} (ID: {team.id}) a choisi le camp {camp}")
-            
+
             return jsonify({'success': True, 'message': message})
             
         except Exception as e:
             db.session.rollback()
-            print(f"[CTFd Camps] Erreur lors de la sélection de camp: {e}")
             return jsonify({'success': False, 'error': 'Erreur lors de la sauvegarde'}), 500
     
     @camps_bp.route('/api/v1/camps/challenges')
@@ -452,19 +441,14 @@ def load_bp():
         if not team_camp:
             return jsonify({'success': False, 'error': 'Vous devez choisir un camp'}), 403
         
-        # Récupérer tous les challenges visibles
+        # Récupérer tous les challenges visibles et leurs camps en batch
         challenges = Challenges.query.filter_by(state='visible').all()
-        
-        # Filtrer et enrichir avec les camps
+        camps_map = {c.challenge_id: c.camp for c in ChallengeCamp.query.all()}
+
         result = []
         for challenge in challenges:
-            camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge.id).first()
-            challenge_camp = camp_entry.camp if camp_entry else None
-            
-            # Règles de visibilité :
-            # 1. Challenge sans camp (null) → Visible pour tous
-            # 2. Challenge avec le même camp que l'équipe → Visible
-            # 3. Challenge d'un autre camp → Masqué
+            challenge_camp = camps_map.get(challenge.id)
+
             if challenge_camp is None or challenge_camp == team_camp:
                 result.append({
                     'id': challenge.id,
