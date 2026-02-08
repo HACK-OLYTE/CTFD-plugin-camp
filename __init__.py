@@ -266,7 +266,7 @@ def load(app):
         def enrich_challenge(challenge):
             """Enrichit un challenge avec son camp"""
             if not hasattr(challenge, 'camp') or challenge.camp is None:
-                camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge_id).first()
+                camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge.id).first()
                 challenge.camp = camp_entry.camp if camp_entry else None
             return challenge
         

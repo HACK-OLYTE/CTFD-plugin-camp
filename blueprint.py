@@ -166,7 +166,7 @@ def load_bp():
         if deadline_str:
             try:
                 deadline = datetime.fromisoformat(deadline_str)
-                deadline_passed = datetime.now() > deadline
+                deadline_passed = datetime.now(timezone.utc) > deadline
             except:
                 pass
         
