@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
 from CTFd.models import db, Teams, Challenges
 from CTFd.utils.decorators import admins_only, authed_only
+from CTFd.utils.decorators.visibility import check_challenge_visibility
+from CTFd.utils.decorators import during_ctf_time_only, require_verified_emails
 from CTFd.utils.config import get_config
 from CTFd.utils.user import get_current_team
 from CTFd.cache import clear_config
@@ -423,7 +425,19 @@ def load_bp():
                 team_camp = TeamCamp(team_id=team.id, camp=camp)
                 db.session.add(team_camp)
                 message = f'Vous avez rejoint le camp {camp}'
-            
+
+            # TOCTOU fix: re-vérifier le count après flush mais avant commit
+            db.session.flush()
+            enable_limits = get_config('camps_enable_team_limits', default=False)
+            if enable_limits:
+                max_teams = int(get_config(f'camps_max_{camp}_teams', default=0))
+                if max_teams > 0:
+                    current_count = TeamCamp.query.filter_by(camp=camp).count()
+                    if current_count > max_teams:
+                        db.session.rollback()
+                        camp_name = "Bleu" if camp == 'blue' else "Rouge"
+                        return jsonify({'success': False, 'error': f'Le camp {camp_name} est devenu complet'}), 409
+
             db.session.commit()
             
             print(f"[CTFd Camps] Équipe {team.name} (ID: {team.id}) a choisi le camp {camp}")
@@ -436,7 +450,10 @@ def load_bp():
             return jsonify({'success': False, 'error': 'Erreur lors de la sauvegarde'}), 500
     
     @camps_bp.route('/api/v1/camps/challenges')
+    @during_ctf_time_only
+    @require_verified_emails
     @authed_only
+    @check_challenge_visibility
     def get_challenges_with_camps():
         """
         API pour récupérer les challenges filtrés selon le camp de l'équipe
