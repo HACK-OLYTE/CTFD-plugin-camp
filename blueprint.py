@@ -394,7 +394,7 @@ def load_bp():
         # Seul le capitaine peut changer le camp de l'équipe
         from CTFd.utils.user import get_current_user
         user = get_current_user()
-        if user.id != team.captain_id:
+        if team.captain_id and user.id != team.captain_id:
             return jsonify({'success': False, 'error': 'Seul le capitaine peut changer le camp de l\'équipe'}), 403
 
         # Validation de sécurité : seulement 'blue' ou 'red'

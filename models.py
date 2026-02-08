@@ -53,8 +53,8 @@ class CampAccessLog(db.Model):
     __tablename__ = 'camp_access_logs'
     
     id = db.Column(db.Integer, primary_key=True)
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id', ondelete='CASCADE'), nullable=False)
-    challenge_id = db.Column(db.Integer, db.ForeignKey('challenges.id', ondelete='CASCADE'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id', ondelete='SET NULL'), nullable=True)
+    challenge_id = db.Column(db.Integer, db.ForeignKey('challenges.id', ondelete='SET NULL'), nullable=True)
     team_camp = db.Column(db.String(10), nullable=False)
     challenge_camp = db.Column(db.String(10), nullable=False)
     ip_address = db.Column(db.String(500))  # On met tout dedans : METHOD URL (IP: xxx)
