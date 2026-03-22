@@ -49,11 +49,6 @@ def load(app):
             print("[CTFd Camps] ✅ Table camp_access_logs créée !")
         else:
             print("[CTFd Camps] ℹ️ Table camp_access_logs existe déjà")
-            # DROP et recréer pour avoir la bonne taille de colonne (à utiliser seulement en cas de modification du modèle)
-            # print("[CTFd Camps] 🔨 DROP de la table camp_access_logs...")
-            # CampAccessLog.__table__.drop(db.engine)
-            # CampAccessLog.__table__.create(db.engine)
-            # print("[CTFd Camps] ✅ Table camp_access_logs recréée !")
     
     # Appliquer les patches admin
     patch_admin_challenges_listing(app)
@@ -160,106 +155,62 @@ def load(app):
         """
         Filtre les challenges dans les réponses API selon le camp de l'équipe
         """
-        # Debug : afficher l'endpoint
-        if request.path.startswith('/api/v1/challenges'):
-            print(f"[CTFd Camps DEBUG] API challenges détectée - path: {request.path}, endpoint: {request.endpoint}, status: {response.status_code}")
-        
         # Ignorer si admin
         if is_admin():
-            if request.path.startswith('/api/v1/challenges'):
-                print(f"[CTFd Camps DEBUG] User is admin, pas de filtrage")
             return response
         
         # FILTRAGE 1 : Liste des challenges (/api/v1/challenges)
         if request.path == '/api/v1/challenges' and response.status_code == 200:
-            print(f"[CTFd Camps DEBUG] Tentative de filtrage de la liste...")
             try:
                 # Récupérer l'équipe et son camp
                 team = get_current_team()
                 if not team:
-                    print(f"[CTFd Camps DEBUG] Pas d'équipe trouvée")
                     return response
-                
-                print(f"[CTFd Camps DEBUG] Équipe trouvée: {team.name} (ID: {team.id})")
                 
                 team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
                 if not team_camp_entry:
-                    print(f"[CTFd Camps DEBUG] Pas de camp assigné à l'équipe → accès bloqué")
-                    import json
-                    response.set_data(json.dumps({
-                        'success': True,
-                        'data': []
-                    }))
                     return response
 
                 team_camp = team_camp_entry.camp
-                print(f"[CTFd Camps DEBUG] Camp de l'équipe: {team_camp}")
-
+                
                 # Parser la réponse JSON
                 import json
                 data = json.loads(response.get_data(as_text=True))
                 
-                print(f"[CTFd Camps DEBUG] Données parsées, success: {data.get('success')}")
-                
                 if data.get('success') and 'data' in data:
-                    original_count = len(data['data'])
-                    print(f"[CTFd Camps DEBUG] Nombre de challenges avant filtrage: {original_count}")
-                    
-                    # Filtrer les challenges
+                    # Charger tous les camps en une seule requête
+                    camps_map = {c.challenge_id: c.camp for c in ChallengeCamp.query.all()}
+
                     filtered_challenges = []
                     for challenge in data['data']:
-                        # Récupérer le camp du challenge
-                        camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge['id']).first()
-                        challenge_camp = camp_entry.camp if camp_entry else None
-                        
-                        print(f"[CTFd Camps DEBUG] Challenge {challenge['id']} ({challenge['name']}): camp={challenge_camp}")
-                        
-                        # Règles de visibilité :
-                        # 1. Challenge sans camp (null) → Visible pour tous
-                        # 2. Challenge avec le même camp que l'équipe → Visible
-                        # 3. Challenge d'un autre camp → Masqué
+                        challenge_camp = camps_map.get(challenge['id'])
+
                         if challenge_camp is None or challenge_camp == team_camp:
                             filtered_challenges.append(challenge)
-                            print(f"[CTFd Camps DEBUG]   → VISIBLE")
-                        else:
-                            print(f"[CTFd Camps DEBUG]   → MASQUÉ")
                     
                     # Remplacer les données
                     data['data'] = filtered_challenges
                     
                     # Reconstruire la réponse
                     response.set_data(json.dumps(data))
-                    
-                    print(f"[CTFd Camps] ✅ Filtrage liste appliqué : {len(filtered_challenges)}/{original_count} challenges visibles pour le camp {team_camp}")
-            
+
             except Exception as e:
-                print(f"[CTFd Camps] ❌ Erreur lors du filtrage de la liste: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f"[CTFd Camps] Erreur lors du filtrage de la liste: {e}")
         
         # FILTRAGE 2 : Challenge individuel (/api/v1/challenges/<id>)
         import re
         match = re.match(r'^/api/v1/challenges/(\d+)$', request.path)
         if match and response.status_code == 200:
             challenge_id = int(match.group(1))
-            print(f"[CTFd Camps DEBUG] 🔒 Tentative d'accès au challenge {challenge_id}...")
             
             try:
                 # Récupérer l'équipe et son camp
                 team = get_current_team()
                 if not team:
-                    print(f"[CTFd Camps DEBUG] Pas d'équipe, accès refusé")
                     return response
-                
+
                 team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
                 if not team_camp_entry:
-                    print(f"[CTFd Camps DEBUG] Pas de camp assigné → accès bloqué")
-                    import json
-                    response.set_data(json.dumps({
-                        'success': False,
-                        'error': 'Vous devez choisir un camp pour accéder aux challenges'
-                    }))
-                    response.status_code = 403
                     return response
 
                 team_camp = team_camp_entry.camp
@@ -268,12 +219,8 @@ def load(app):
                 camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge_id).first()
                 challenge_camp = camp_entry.camp if camp_entry else None
                 
-                print(f"[CTFd Camps DEBUG] Challenge {challenge_id}: camp={challenge_camp}, équipe: camp={team_camp}")
-                
                 # Si le challenge a un camp différent → BLOQUER
                 if challenge_camp is not None and challenge_camp != team_camp:
-                    print(f"[CTFd Camps] 🚨 ACCÈS REFUSÉ au challenge {challenge_id} (camp {challenge_camp}) pour l'équipe {team.name} (camp {team_camp})")
-                    
                     # Logger la tentative
                     try:
                         request_info = f"{request.method} {request.url} (IP: {get_ip(req=request)})"
@@ -286,8 +233,7 @@ def load(app):
                         )
                         db.session.add(log_entry)
                         db.session.commit()
-                    except Exception as log_error:
-                        print(f"[CTFd Camps] ⚠️ Erreur logging: {log_error}")
+                    except Exception:
                         db.session.rollback()
                     
                     import json
@@ -296,13 +242,8 @@ def load(app):
                         'error': 'Ce challenge n\'est pas accessible par votre camp'
                     }))
                     response.status_code = 403
-                else:
-                    print(f"[CTFd Camps] ✅ Accès autorisé au challenge {challenge_id}")
-            
             except Exception as e:
-                print(f"[CTFd Camps] ❌ Erreur lors du filtrage individuel: {e}")
-                import traceback
-                traceback.print_exc()
+                print(f"[CTFd Camps] Erreur lors du filtrage individuel: {e}")
         
         return response
     
@@ -358,24 +299,8 @@ def load(app):
             show_badges = get_config('camps_show_challenge_badges', default=False)
             
             if show_badges:
-                # Récupérer le camp de l'équipe courante
-                team = get_current_team()
-                team_camp = None
-                if team:
-                    team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
-                    team_camp = team_camp_entry.camp if team_camp_entry else None
-
-                # Récupérer les camps des challenges, filtré par camp de l'équipe
-                from CTFd.models import Challenges as ChallengesModel
-                challenges = ChallengesModel.query.filter_by(state='visible').all()
-
-                camps_map = {}
-                for challenge in challenges:
-                    camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge.id).first()
-                    if camp_entry:
-                        # Ne pas inclure les challenges de l'autre camp
-                        if team_camp is None or camp_entry.camp == team_camp:
-                            camps_map[challenge.id] = camp_entry.camp
+                # Charger tous les camps en une seule requête
+                camps_map = {c.challenge_id: c.camp for c in ChallengeCamp.query.all()}
                 
                 # Injecter le script
                 inject_script = f"""
@@ -425,7 +350,6 @@ def load(app):
     const observer = new MutationObserver(addCampBadges);
     observer.observe(document.body, {{ childList: true, subtree: true }});
     
-    console.log('[CTFd Camps] Pastilles de camp injectées:', Object.keys(campsMap).length, 'challenges');
 }})();
 </script>
 """
@@ -453,8 +377,7 @@ def load(app):
                 # Injecter dans g pour utilisation ultérieure
                 g.camps_map = camps_map
                 
-            except Exception as e:
-                print(f"[CTFd Camps] ⚠️ Erreur lors de l'enrichissement: {e}")
+            except Exception:
                 g.camps_map = {}
         
         # Enrichir les équipes avec leur camp pour la page admin teams
@@ -466,8 +389,7 @@ def load(app):
                 # Injecter dans g pour utilisation ultérieure
                 g.teams_camps_map = teams_camps_map
                 
-            except Exception as e:
-                print(f"[CTFd Camps] ⚠️ Erreur lors de l'enrichissement teams: {e}")
+            except Exception:
                 g.teams_camps_map = {}
 
     
@@ -498,7 +420,6 @@ def load(app):
                 if camp_value and camp_value in ['blue', 'red']:
                     g.camp_value = camp_value
                 elif camp_value:
-                    print(f"[CTFd Camps] ⚠️ Valeur de camp invalide rejetée : {camp_value}")
                     g.camp_value = None
                 else:
                     g.camp_value = None
@@ -528,9 +449,7 @@ def load(app):
                         )
                         db.session.add(camp_entry)
                         db.session.commit()
-                        print(f"[CTFd Camps] ✅ Camp '{g.camp_value}' assigné au challenge {challenge_id}")
-                except Exception as e:
-                    print(f"[CTFd Camps] ⚠️ Erreur lors de la sauvegarde du camp: {e}")
+                except Exception:
                     db.session.rollback()
             
             # Modification de challenge (PATCH)
@@ -552,9 +471,7 @@ def load(app):
                             db.session.add(camp_entry)
                         
                         db.session.commit()
-                        print(f"[CTFd Camps] ✅ Camp '{g.camp_value}' mis à jour pour le challenge {challenge_id}")
-                except Exception as e:
-                    print(f"[CTFd Camps] ⚠️ Erreur lors de la mise à jour du camp: {e}")
+                except Exception:
                     db.session.rollback()
         
         return response
