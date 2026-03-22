@@ -3,10 +3,10 @@
 {% block content %}
 <div class="jumbotron">
     <div class="container">
-        <h1>🎯 Gestion des Camps</h1>
-        <p class="lead">Configuration du système Bleu vs Rouge</p>
+        <h1>🎯 Camp Management</h1>
+        <p class="lead">Blue vs Red camp configuration</p>
         <a href="/admin/camps/logs" class="btn btn-warning">
-            <i class="fas fa-shield-alt"></i> Voir les logs de sécurité
+            <i class="fas fa-shield-alt"></i> Security logs
         </a>
     </div>
     <br>
@@ -14,7 +14,7 @@
     <a href="https://hackolyte.fr/">
       <img src="https://hackolyte.fr/wp-content/uploads/2024/09/cropped-cropped-logo.png" alt="Hack'olyte logo" style="height: 30px; vertical-align: middle; margin-right: 5px;">
     </a>
-    Plugin développé par l'association <a href="https://hackolyte.fr/">Hack'olyte</a> - v1.0
+    Plugin developed by <a href="https://hackolyte.fr/">Hack'olyte</a> - v1.0
   </p>
 </div>
 
@@ -30,119 +30,119 @@
                     <form id="config-form">
                         <div class="form-group">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="allow-change" 
+                                <input type="checkbox" class="custom-control-input" id="allow-change"
                                        {% if config.allow_change %}checked{% endif %}>
                                 <label class="custom-control-label" for="allow-change">
-                                    <strong>Autoriser le changement de camp</strong>
-                                    <br><small class="text-muted">Si désactivé, une fois le camp choisi, il ne peut plus être modifié</small>
+                                    <strong>Allow camp change</strong>
+                                    <br><small class="text-muted">If disabled, once a camp is chosen it cannot be changed</small>
                                 </label>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="show-public-stats" 
+                                <input type="checkbox" class="custom-control-input" id="show-public-stats"
                                        {% if config.show_public_stats %}checked{% endif %}>
                                 <label class="custom-control-label" for="show-public-stats">
-                                    <strong>Afficher publiquement le nombre d'équipes par camp</strong>
-                                    <br><small class="text-muted">Les équipes verront les statistiques sur /camps/select</small>
+                                    <strong>Show team count per camp publicly</strong>
+                                    <br><small class="text-muted">Teams will see the stats on /camps/select</small>
                                 </label>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="show-challenge-badges" 
+                                <input type="checkbox" class="custom-control-input" id="show-challenge-badges"
                                        {% if config.show_challenge_badges %}checked{% endif %}>
                                 <label class="custom-control-label" for="show-challenge-badges">
-                                    <strong>Afficher les pastilles de camp sur les challenges</strong>
-                                    <br><small class="text-muted">Une petite bulle colorée 🔵/🔴 apparaîtra en bas à gauche de chaque challenge</small>
+                                    <strong>Show camp badges on challenges</strong>
+                                    <br><small class="text-muted">A small colored dot 🔵/🔴 will appear in the bottom-left of each challenge card</small>
                                 </label>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <div class="custom-control custom-switch">
-                                <input type="checkbox" class="custom-control-input" id="enable-team-limits" 
+                                <input type="checkbox" class="custom-control-input" id="enable-team-limits"
                                        {% if config.enable_team_limits %}checked{% endif %}>
                                 <label class="custom-control-label" for="enable-team-limits">
-                                    <strong>Limiter le nombre d'équipes par camp</strong>
-                                    <br><small class="text-muted">Empêche les équipes de rejoindre un camp une fois le quota atteint</small>
+                                    <strong>Limit the number of teams per camp</strong>
+                                    <br><small class="text-muted">Prevents teams from joining a camp once its quota is reached</small>
                                 </label>
                             </div>
                         </div>
-                        
+
                         <div id="team-limits-fields" style="display: {% if config.enable_team_limits %}block{% else %}none{% endif %};">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="max-blue-teams">🔵 <strong>Maximum Camp Bleu</strong></label>
-                                        <input type="number" class="form-control" id="max-blue-teams" min="0" 
-                                               value="{{ config.max_blue_teams }}" placeholder="0 = illimité">
+                                        <label for="max-blue-teams">🔵 <strong>Blue Camp maximum</strong></label>
+                                        <input type="number" class="form-control" id="max-blue-teams" min="0"
+                                               value="{{ config.max_blue_teams }}" placeholder="0 = unlimited">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="max-red-teams">🔴 <strong>Maximum Camp Rouge</strong></label>
-                                        <input type="number" class="form-control" id="max-red-teams" min="0" 
-                                               value="{{ config.max_red_teams }}" placeholder="0 = illimité">
+                                        <label for="max-red-teams">🔴 <strong>Red Camp maximum</strong></label>
+                                        <input type="number" class="form-control" id="max-red-teams" min="0"
+                                               value="{{ config.max_red_teams }}" placeholder="0 = unlimited">
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
-                            <label for="deadline"><strong>Date limite de changement</strong></label>
-                            <input type="datetime-local" class="form-control" id="deadline" 
+                            <label for="deadline"><strong>Camp change deadline</strong></label>
+                            <input type="datetime-local" class="form-control" id="deadline"
                                    value="{{ config.deadline[:16] if config.deadline else '' }}">
                             <small class="form-text text-muted">
-                                Après cette date, aucun changement ne sera possible, même si l'option est activée
+                                After this date, no changes will be possible even if the option is enabled
                             </small>
                         </div>
-                        
+
                         {% if config.deadline %}
                         <div class="alert {% if config.deadline_passed %}alert-danger{% else %}alert-success{% endif %}">
                             {% if config.deadline_passed %}
-                                🔴 <strong>Date limite dépassée</strong> - Les changements de camp sont bloqués
+                                🔴 <strong>Deadline passed</strong> — Camp changes are blocked
                             {% else %}
-                                🟢 <strong>Changements autorisés</strong> jusqu'au {{ config.deadline[:16].replace('T', ' ') }}
+                                🟢 <strong>Changes allowed</strong> until {{ config.deadline[:16].replace('T', ' ') }}
                             {% endif %}
                         </div>
                         {% endif %}
-                        
-                        <button type="submit" class="btn btn-primary">💾 Sauvegarder la configuration</button>
+
+                        <button type="submit" class="btn btn-primary">💾 Save configuration</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Statistiques -->
+    <!-- Statistics -->
     <div class="row mb-4">
         <div class="col-md-3">
             <div class="card text-white bg-primary">
                 <div class="card-body">
-                    <h5 class="card-title">🔵 Camp Bleu</h5>
+                    <h5 class="card-title">🔵 Blue Camp</h5>
                     <h2>{{ stats.blue }}</h2>
-                    <p class="mb-0">équipes</p>
+                    <p class="mb-0">teams</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-danger">
                 <div class="card-body">
-                    <h5 class="card-title">🔴 Camp Rouge</h5>
+                    <h5 class="card-title">🔴 Red Camp</h5>
                     <h2>{{ stats.red }}</h2>
-                    <p class="mb-0">équipes</p>
+                    <p class="mb-0">teams</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-secondary">
                 <div class="card-body">
-                    <h5 class="card-title">⚪ Non assignées</h5>
+                    <h5 class="card-title">⚪ Unassigned</h5>
                     <h2>{{ stats.unassigned }}</h2>
-                    <p class="mb-0">équipes</p>
+                    <p class="mb-0">teams</p>
                 </div>
             </div>
         </div>
@@ -151,26 +151,26 @@
                 <div class="card-body">
                     <h5 class="card-title">📊 Total</h5>
                     <h2>{{ stats.total }}</h2>
-                    <p class="mb-0">équipes</p>
+                    <p class="mb-0">teams</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Liste des équipes -->
+    <!-- Team list -->
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h3>Gestion des équipes</h3>
+                    <h3>Team management</h3>
                 </div>
                 <div class="card-body">
                     <table class="table table-striped">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Nom de l'équipe</th>
-                                <th>Camp actuel</th>
+                                <th>Team name</th>
+                                <th>Current camp</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -180,25 +180,25 @@
                                 <td>{{ team.id }}</td>
                                 <td>{{ team.name }}</td>
                                 <td>
-                                    <span class="badge badge-pill 
+                                    <span class="badge badge-pill
                                         {% if team.camp == 'blue' %}badge-primary
                                         {% elif team.camp == 'red' %}badge-danger
                                         {% else %}badge-secondary{% endif %}">
-                                        {% if team.camp == 'blue' %}🔵 Camp Bleu
-                                        {% elif team.camp == 'red' %}🔴 Camp Rouge
-                                        {% else %}⚪ Non assigné{% endif %}
+                                        {% if team.camp == 'blue' %}🔵 Blue Camp
+                                        {% elif team.camp == 'red' %}🔴 Red Camp
+                                        {% else %}⚪ Unassigned{% endif %}
                                     </span>
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
                                         <button class="btn btn-sm btn-primary" onclick="updateCamp({{ team.id }}, 'blue')">
-                                            🔵 Bleu
+                                            🔵 Blue
                                         </button>
                                         <button class="btn btn-sm btn-danger" onclick="updateCamp({{ team.id }}, 'red')">
-                                            🔴 Rouge
+                                            🔴 Red
                                         </button>
                                         <button class="btn btn-sm btn-secondary" onclick="updateCamp({{ team.id }}, 'none')">
-                                            ❌ Retirer
+                                            ❌ Remove
                                         </button>
                                     </div>
                                 </td>
@@ -213,15 +213,15 @@
 </div>
 
 <script>
-// Afficher/masquer les champs de limite selon la checkbox
+// Show/hide limit fields based on checkbox
 document.getElementById('enable-team-limits').addEventListener('change', function() {
     document.getElementById('team-limits-fields').style.display = this.checked ? 'block' : 'none';
 });
 
-// Sauvegarder la configuration
+// Save configuration
 document.getElementById('config-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const allowChange = document.getElementById('allow-change').checked;
     const showPublicStats = document.getElementById('show-public-stats').checked;
     const showChallengeBadges = document.getElementById('show-challenge-badges').checked;
@@ -229,13 +229,13 @@ document.getElementById('config-form').addEventListener('submit', function(e) {
     const maxBlueTeams = parseInt(document.getElementById('max-blue-teams').value) || 0;
     const maxRedTeams = parseInt(document.getElementById('max-red-teams').value) || 0;
     const deadline = document.getElementById('deadline').value;
-    
-    // Convertir en format ISO si une date est sélectionnée
+
+    // Convert to ISO format if a date is selected
     let deadlineISO = '';
     if (deadline) {
         deadlineISO = new Date(deadline).toISOString();
     }
-    
+
     fetch('/admin/camps/config', {
         method: 'POST',
         headers: {
@@ -255,25 +255,25 @@ document.getElementById('config-form').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Configuration sauvegardée !');
+            alert('✅ Configuration saved!');
             location.reload();
         } else {
-            alert('❌ Erreur: ' + data.error);
+            alert('❌ Error: ' + data.error);
         }
     })
     .catch(error => {
-        console.error('Erreur:', error);
-        alert('❌ Erreur lors de la sauvegarde');
+        console.error('Error:', error);
+        alert('❌ Error saving configuration');
     });
 });
 
-// Mettre à jour le camp d'une équipe
+// Update a team's camp
 function updateCamp(teamId, camp) {
     if (!['blue', 'red', 'none'].includes(camp)) {
-        alert('Camp invalide');
+        alert('Invalid camp');
         return;
     }
-    
+
     fetch(`/admin/camps/team/${teamId}`, {
         method: 'POST',
         headers: {
@@ -287,12 +287,12 @@ function updateCamp(teamId, camp) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Erreur: ' + data.error);
+            alert('Error: ' + data.error);
         }
     })
     .catch(error => {
-        console.error('Erreur:', error);
-        alert('Erreur lors de la mise à jour');
+        console.error('Error:', error);
+        alert('Error updating camp');
     });
 }
 </script>

@@ -3,179 +3,174 @@
 {% block content %}
 <div class="jumbotron">
     <div class="container">
-        <h1>🎯 Choix du Camp</h1>
-        <p class="lead">Choisissez votre camp pour participer au CTF</p>
+        <h1 data-i18n="camp_selection_title">🎯 Camp Selection</h1>
+        <p class="lead" data-i18n="camp_selection_subtitle">Choose your camp to participate in the CTF</p>
     </div>
 </div>
 
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            
-            <!-- Carte principale avec toutes les infos -->
+
             <div class="card mb-4">
                 <div class="card-body">
-                    
-                    <!-- Statistiques et statut actuel -->
+
+                    <!-- Statistics -->
                     {% if stats and stats.show_counts %}
                     <div class="alert alert-info mb-3">
-                        <h5 class="mb-3">📊 Répartition actuelle des équipes</h5>
+                        <h5 class="mb-3" data-i18n="current_distribution">📊 Current team distribution</h5>
                         <div class="row text-center">
                             <div class="col-md-6 mb-2 mb-md-0">
                                 <span class="badge badge-primary p-2" style="font-size: 1.1em; color: #fff !important;">
-                                    🔵 Camp Bleu : {{ stats.blue }}{% if stats.show_limits and stats.blue_max > 0 %}/{{ stats.blue_max }}{% endif %} équipe(s)
+                                    🔵 <span data-i18n="blue_camp">Blue Camp</span>: {{ stats.blue }}{% if stats.show_limits and stats.blue_max > 0 %}/{{ stats.blue_max }}{% endif %} <span data-i18n="teams_label">team(s)</span>
                                 </span>
                             </div>
                             <div class="col-md-6">
                                 <span class="badge badge-danger p-2" style="font-size: 1.1em; color: #fff !important;">
-                                    🔴 Camp Rouge : {{ stats.red }}{% if stats.show_limits and stats.red_max > 0 %}/{{ stats.red_max }}{% endif %} équipe(s)
+                                    🔴 <span data-i18n="red_camp">Red Camp</span>: {{ stats.red }}{% if stats.show_limits and stats.red_max > 0 %}/{{ stats.red_max }}{% endif %} <span data-i18n="teams_label">team(s)</span>
                                 </span>
                             </div>
                         </div>
                     </div>
                     {% endif %}
-                    
-                    <!-- Statut du camp actuel -->
+
+                    <!-- Current camp status -->
                     {% if current_camp %}
                     <div class="alert {% if current_camp == 'blue' %}alert-primary{% else %}alert-danger{% endif %} mb-3">
                         <h4 class="mb-0">
                             {% if current_camp == 'blue' %}
-                                🔵 <strong>Votre camp actuel : Camp Bleu</strong> (Défenseurs)
+                                🔵 <strong><span data-i18n="your_current_camp">Your current camp</span>: <span data-i18n="blue_camp">Blue Camp</span></strong> (<span data-i18n="defenders">Defenders</span>)
                             {% else %}
-                                🔴 <strong>Votre camp actuel : Camp Rouge</strong> (Attaquants)
+                                🔴 <strong><span data-i18n="your_current_camp">Your current camp</span>: <span data-i18n="red_camp">Red Camp</span></strong> (<span data-i18n="attackers">Attackers</span>)
                             {% endif %}
                         </h4>
                     </div>
                     {% else %}
                     <div class="alert alert-warning mb-3">
-                        <h5 class="mb-0">⚠️ <strong>Aucun camp sélectionné</strong></h5>
-                        <p class="mb-0 mt-2">Vous devez choisir un camp pour accéder aux challenges !</p>
+                        <h5 class="mb-0">⚠️ <strong data-i18n="no_camp_selected">No camp selected</strong></h5>
+                        <p class="mb-0 mt-2" data-i18n="no_camp_warning">You must choose a camp to access challenges!</p>
                     </div>
                     {% endif %}
-                    
+
                     <!-- Deadline info -->
                     {% if deadline and allow_change %}
                     <div class="alert {% if can_change %}alert-warning{% else %}alert-danger{% endif %} mb-3">
-                        <strong>⏰ {% if can_change %}Attention{% else %}Date limite dépassée{% endif %}</strong> : 
+                        <strong>⏰ {% if can_change %}<span data-i18n="deadline_notice_label">Notice</span>{% else %}<span data-i18n="deadline_passed_label">Deadline passed</span>{% endif %}</strong>:
                         {% if can_change %}
-                            Vous pouvez changer de camp jusqu'au <strong>{{ deadline }}</strong>
+                            <span data-i18n="can_change_until">You can change your camp until</span> <strong>{{ deadline }}</strong>
                         {% else %}
-                            La date limite était le <strong>{{ deadline }}</strong>
+                            <span data-i18n="deadline_was">The deadline was</span> <strong>{{ deadline }}</strong>
                         {% endif %}
                     </div>
                     {% endif %}
-                    
-                    <!-- Message d'erreur si changement bloqué -->
+
+                    <!-- Change blocked -->
                     {% if not can_change %}
                     <div class="alert alert-danger mb-3">
-                        <h5>🔒 <strong>Changement de camp bloqué</strong></h5>
+                        <h5>🔒 <strong data-i18n="change_blocked">Camp change blocked</strong></h5>
                         <p class="mb-0">{{ change_error }}</p>
                     </div>
                     {% endif %}
-                    
+
                 </div>
             </div>
-            
-            <!-- Cartes de sélection de camp -->
+
+            <!-- Camp cards -->
             <div class="row">
-                <!-- Camp Bleu -->
+                <!-- Blue Camp -->
                 <div class="col-md-6 mb-3">
                     <div class="card h-100 {% if current_camp == 'blue' %}border-primary{% else %}border-secondary{% endif %}" style="border-width: 2px;">
                         <div class="card-body text-center">
-                            <h2 class="card-title">🔵 Camp Bleu</h2>
-                            <h5 class="text-muted mb-3">Défenseurs</h5>
-                            <p class="card-text">
-                                Protégez les systèmes et infrastructures contre les attaques.
-                                Analysez les logs, renforcez la sécurité, détectez les intrusions.
+                            <h2 class="card-title">🔵 <span data-i18n="blue_camp">Blue Camp</span></h2>
+                            <h5 class="text-muted mb-3" data-i18n="defenders">Defenders</h5>
+                            <p class="card-text" data-i18n="blue_camp_desc">
+                                Protect systems and infrastructure against attacks.
+                                Analyze logs, harden security, detect intrusions.
                             </p>
                             <ul class="list-unstyled mb-4">
-                                <li class="mb-1">🛡️ Challenges de défense</li>
-                                <li class="mb-1">🔍 Analyse forensics</li>
-                                <li class="mb-1">🚨 Détection d'incidents</li>
+                                <li class="mb-1">🛡️ <span data-i18n="blue_item1">Defense challenges</span></li>
+                                <li class="mb-1">🔍 <span data-i18n="blue_item2">Forensics analysis</span></li>
+                                <li class="mb-1">🚨 <span data-i18n="blue_item3">Incident detection</span></li>
                             </ul>
-                            
+
                             {% if current_camp == 'blue' %}
                                 <button class="btn btn-primary btn-lg" disabled>
-                                    ✓ Camp actuel
+                                    ✓ <span data-i18n="current_camp_btn">Current camp</span>
                                 </button>
                             {% elif not can_change or not can_join_blue %}
                                 <button class="btn btn-secondary btn-lg" disabled>
                                     {% if not can_join_blue %}
-                                        🔒 Camp complet
-                                        {% if stats and stats.show_counts and stats.show_limits and stats.blue_max > 0 %}
-                                            (limité à {{ stats.blue_max }})
-                                        {% endif %}
+                                        🔒 <span data-i18n="camp_full">Camp full</span>{% if stats and stats.show_counts and stats.show_limits and stats.blue_max > 0 %} (<span data-i18n="limited_to">limited to</span> {{ stats.blue_max }}){% endif %}
                                     {% else %}
-                                        🔒 Changement bloqué
+                                        🔒 <span data-i18n="change_locked">Change locked</span>
                                     {% endif %}
                                 </button>
                             {% else %}
                                 <button class="btn btn-outline-primary btn-lg" onclick="selectCamp('blue')">
-                                    Rejoindre le Camp Bleu
+                                    <span data-i18n="join_blue">Join Blue Camp</span>
                                 </button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                
-                <!-- Camp Rouge -->
+
+                <!-- Red Camp -->
                 <div class="col-md-6 mb-3">
                     <div class="card h-100 {% if current_camp == 'red' %}border-danger{% else %}border-secondary{% endif %}" style="border-width: 2px;">
                         <div class="card-body text-center">
-                            <h2 class="card-title">🔴 Camp Rouge</h2>
-                            <h5 class="text-muted mb-3">Attaquants</h5>
-                            <p class="card-text">
-                                Exploitez les vulnérabilités et pénétrez les systèmes adverses.
-                                Trouvez les failles, développez des exploits, contournez les protections.
+                            <h2 class="card-title">🔴 <span data-i18n="red_camp">Red Camp</span></h2>
+                            <h5 class="text-muted mb-3" data-i18n="attackers">Attackers</h5>
+                            <p class="card-text" data-i18n="red_camp_desc">
+                                Exploit vulnerabilities and penetrate adversary systems.
+                                Find flaws, develop exploits, bypass protections.
                             </p>
                             <ul class="list-unstyled mb-4">
-                                <li class="mb-1">⚔️ Challenges d'attaque</li>
-                                <li class="mb-1">💉 Exploitation de vulnérabilités</li>
-                                <li class="mb-1">🎯 Pentest offensif</li>
+                                <li class="mb-1">⚔️ <span data-i18n="red_item1">Offensive challenges</span></li>
+                                <li class="mb-1">💉 <span data-i18n="red_item2">Vulnerability exploitation</span></li>
+                                <li class="mb-1">🎯 <span data-i18n="red_item3">Offensive pentesting</span></li>
                             </ul>
-                            
+
                             {% if current_camp == 'red' %}
                                 <button class="btn btn-danger btn-lg" disabled>
-                                    ✓ Camp actuel
+                                    ✓ <span data-i18n="current_camp_btn">Current camp</span>
                                 </button>
                             {% elif not can_change or not can_join_red %}
                                 <button class="btn btn-secondary btn-lg" disabled>
                                     {% if not can_join_red %}
-                                        🔒 Camp complet
-                                        {% if stats and stats.show_counts and stats.show_limits and stats.red_max > 0 %}
-                                            (limité à {{ stats.red_max }})
-                                        {% endif %}
+                                        🔒 <span data-i18n="camp_full">Camp full</span>{% if stats and stats.show_counts and stats.show_limits and stats.red_max > 0 %} (<span data-i18n="limited_to">limited to</span> {{ stats.red_max }}){% endif %}
                                     {% else %}
-                                        🔒 Changement bloqué
+                                        🔒 <span data-i18n="change_locked">Change locked</span>
                                     {% endif %}
                                 </button>
                             {% else %}
                                 <button class="btn btn-outline-danger btn-lg" onclick="selectCamp('red')">
-                                    Rejoindre le Camp Rouge
+                                    <span data-i18n="join_red">Join Red Camp</span>
                                 </button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-            
+
         </div>
     </div>
     <br>
     <p style="text-align: center;">
-    <a href="https://hackolyte.fr/">
-      <img src="https://hackolyte.fr/wp-content/uploads/2024/09/cropped-cropped-logo.png" alt="Hack'olyte logo" style="height: 30px; vertical-align: middle; margin-right: 5px;">
-    </a>
-    Plugin développé par l'association <a href="https://hackolyte.fr/">Hack'olyte</a> - v1.0
-  </p>
+        <a href="https://hackolyte.fr/">
+            <img src="https://hackolyte.fr/wp-content/uploads/2024/09/cropped-cropped-logo.png" alt="Hack'olyte logo" style="height: 30px; vertical-align: middle; margin-right: 5px;">
+        </a>
+        <span data-i18n="plugin_by">Plugin developed by</span> <a href="https://hackolyte.fr/">Hack'olyte</a> - v1.0
+    </p>
 </div>
 
+<script src="/plugins/ctfd-plugin-camp/assets/i18n.js"></script>
 <script>
 function selectCamp(camp) {
-    if (!confirm(`Êtes-vous sûr de vouloir rejoindre le Camp ${camp === 'blue' ? 'Bleu' : 'Rouge'} ?`)) {
+    var campName = camp === 'blue' ? CampI18n.t('blue_camp') : CampI18n.t('red_camp');
+    if (!confirm(CampI18n.t('confirm_join').replace('{camp}', campName))) {
         return;
     }
-    
+
     fetch('/api/v1/camps/select', {
         method: 'POST',
         headers: {
@@ -190,12 +185,12 @@ function selectCamp(camp) {
             alert('✅ ' + data.message);
             location.reload();
         } else {
-            alert('❌ Erreur: ' + data.error);
+            alert('❌ ' + CampI18n.t('error_label') + ': ' + data.error);
         }
     })
     .catch(error => {
-        console.error('Erreur:', error);
-        alert('❌ Erreur lors de la sélection du camp');
+        console.error('Error:', error);
+        alert('❌ ' + CampI18n.t('select_error'));
     });
 }
 </script>

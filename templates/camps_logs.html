@@ -3,18 +3,18 @@
 {% block content %}
 <div class="jumbotron">
     <div class="container">
-        <h1>🚨 Logs des tentatives d'accès</h1>
-        <p class="lead">Détection des équipes tentant d'accéder aux challenges d'autres camps</p>
+        <h1>🚨 Access Attempt Logs</h1>
+        <p class="lead">Detection of teams attempting to access challenges from other camps</p>
     </div>
 </div>
 
 <div class="container">
-    <!-- Statistiques -->
+    <!-- Statistics -->
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card text-white bg-danger">
                 <div class="card-body">
-                    <h5 class="card-title">🚨 Total tentatives</h5>
+                    <h5 class="card-title">🚨 Total attempts</h5>
                     <h2>{{ stats.total }}</h2>
                 </div>
             </div>
@@ -22,7 +22,7 @@
         <div class="col-md-4">
             <div class="card text-white bg-warning">
                 <div class="card-body">
-                    <h5 class="card-title">👥 Équipes impliquées</h5>
+                    <h5 class="card-title">👥 Teams involved</h5>
                     <h2>{{ stats.unique_teams }}</h2>
                 </div>
             </div>
@@ -30,9 +30,9 @@
         <div class="col-md-4">
             <div class="card text-white bg-info">
                 <div class="card-body">
-                    <h5 class="card-title">📋 Logs affichés</h5>
+                    <h5 class="card-title">📋 Logs shown</h5>
                     <h2>{{ stats.shown }}</h2>
-                    <small>(100 derniers)</small>
+                    <small>(last 100)</small>
                 </div>
             </div>
         </div>
@@ -42,32 +42,32 @@
     <div class="row mb-3">
         <div class="col-md-12">
             <button class="btn btn-danger" onclick="clearLogs()">
-                <i class="fas fa-trash"></i> Supprimer tous les logs
+                <i class="fas fa-trash"></i> Clear all logs
             </button>
             <a href="/admin/camps" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Retour
+                <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
     </div>
 
-    <!-- Tableau des logs -->
+    <!-- Logs table -->
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h3>Logs d'accès illégitimes</h3>
+                    <h3>Unauthorized access logs</h3>
                 </div>
                 <div class="card-body">
                     {% if logs %}
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>Date/Heure</th>
-                                <th>Équipe</th>
-                                <th>Camp équipe</th>
-                                <th>Challenge visé</th>
-                                <th>Camp challenge</th>
-                                <th>Requête & IP</th>
+                                <th>Date/Time</th>
+                                <th>Team</th>
+                                <th>Team camp</th>
+                                <th>Target challenge</th>
+                                <th>Challenge camp</th>
+                                <th>Request &amp; IP</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -81,7 +81,7 @@
                                 </td>
                                 <td>
                                     <span class="badge {% if log.team_camp == 'blue' %}badge-primary{% else %}badge-danger{% endif %}">
-                                        {% if log.team_camp == 'blue' %}🔵 Bleu{% else %}🔴 Rouge{% endif %}
+                                        {% if log.team_camp == 'blue' %}🔵 Blue{% else %}🔴 Red{% endif %}
                                     </span>
                                 </td>
                                 <td>
@@ -91,7 +91,7 @@
                                 </td>
                                 <td>
                                     <span class="badge {% if log.challenge_camp == 'blue' %}badge-primary{% else %}badge-danger{% endif %}">
-                                        {% if log.challenge_camp == 'blue' %}🔵 Bleu{% else %}🔴 Rouge{% endif %}
+                                        {% if log.challenge_camp == 'blue' %}🔵 Blue{% else %}🔴 Red{% endif %}
                                     </span>
                                 </td>
                                 <td><code style="font-size: 0.85em;">{{ log.request_info }}</code></td>
@@ -101,8 +101,8 @@
                     </table>
                     {% else %}
                     <div class="alert alert-success">
-                        <h4>✅ Aucune tentative d'accès suspecte</h4>
-                        <p>Toutes les équipes respectent les règles des camps !</p>
+                        <h4>✅ No suspicious access attempts</h4>
+                        <p>All teams are respecting the camp rules!</p>
                     </div>
                     {% endif %}
                 </div>
@@ -113,10 +113,10 @@
 
 <script>
 function clearLogs() {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer TOUS les logs ?')) {
+    if (!confirm('Are you sure you want to delete ALL logs?')) {
         return;
     }
-    
+
     fetch('/admin/camps/logs/clear', {
         method: 'POST',
         headers: {
@@ -127,15 +127,15 @@ function clearLogs() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ Logs supprimés !');
+            alert('✅ Logs cleared!');
             location.reload();
         } else {
-            alert('❌ Erreur: ' + data.error);
+            alert('❌ Error: ' + data.error);
         }
     })
     .catch(error => {
-        console.error('Erreur:', error);
-        alert('❌ Erreur lors de la suppression');
+        console.error('Error:', error);
+        alert('❌ Error clearing logs');
     });
 }
 </script>
