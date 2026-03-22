@@ -184,12 +184,17 @@ def load(app):
                 
                 team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
                 if not team_camp_entry:
-                    print(f"[CTFd Camps DEBUG] Pas de camp assigné à l'équipe")
+                    print(f"[CTFd Camps DEBUG] Pas de camp assigné à l'équipe → accès bloqué")
+                    import json
+                    response.set_data(json.dumps({
+                        'success': True,
+                        'data': []
+                    }))
                     return response
-                
+
                 team_camp = team_camp_entry.camp
                 print(f"[CTFd Camps DEBUG] Camp de l'équipe: {team_camp}")
-                
+
                 # Parser la réponse JSON
                 import json
                 data = json.loads(response.get_data(as_text=True))
@@ -248,11 +253,17 @@ def load(app):
                 
                 team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
                 if not team_camp_entry:
-                    print(f"[CTFd Camps DEBUG] Pas de camp assigné, accès refusé")
+                    print(f"[CTFd Camps DEBUG] Pas de camp assigné → accès bloqué")
+                    import json
+                    response.set_data(json.dumps({
+                        'success': False,
+                        'error': 'Vous devez choisir un camp pour accéder aux challenges'
+                    }))
+                    response.status_code = 403
                     return response
-                
+
                 team_camp = team_camp_entry.camp
-                
+
                 # Vérifier le camp du challenge
                 camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge_id).first()
                 challenge_camp = camp_entry.camp if camp_entry else None
