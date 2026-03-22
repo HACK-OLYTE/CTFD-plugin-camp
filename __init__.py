@@ -90,6 +90,65 @@ def load(app):
                     # Pas de camp assigné, rediriger
                     return redirect('/camps/select')
     
+    # Hook pour bloquer les soumissions de flags cross-camp
+    @app.before_request
+    def block_cross_camp_attempt():
+        """
+        Bloque les POST /api/v1/challenges/attempt si le challenge
+        n'appartient pas au camp de l'équipe.
+        """
+        if request.path != '/api/v1/challenges/attempt' or request.method != 'POST':
+            return
+
+        if is_admin():
+            return
+
+        team = get_current_team()
+        if not team:
+            return
+
+        team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
+        if not team_camp_entry:
+            return
+
+        team_camp = team_camp_entry.camp
+
+        try:
+            data = request.get_json()
+            challenge_id = data.get('challenge_id') if data else None
+            if not challenge_id:
+                return
+
+            camp_entry = ChallengeCamp.query.filter_by(challenge_id=int(challenge_id)).first()
+            challenge_camp = camp_entry.camp if camp_entry else None
+
+            if challenge_camp is not None and challenge_camp != team_camp:
+                # Logger la tentative
+                try:
+                    request_info = f"POST /api/v1/challenges/attempt challenge_id={challenge_id} (IP: {get_ip(req=request)})"
+                    log_entry = CampAccessLog(
+                        team_id=team.id,
+                        challenge_id=int(challenge_id),
+                        team_camp=team_camp,
+                        challenge_camp=challenge_camp,
+                        ip_address=request_info[:500]
+                    )
+                    db.session.add(log_entry)
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+
+                from flask import jsonify
+                return jsonify({
+                    'success': True,
+                    'data': {
+                        'status': 'incorrect',
+                        'message': 'Ce challenge n\'est pas accessible par votre camp'
+                    }
+                }), 403
+        except Exception:
+            pass
+
     # Hook pour filtrer les challenges selon le camp de l'équipe
     @app.after_request
     def filter_challenges_by_camp(response):
@@ -153,9 +212,9 @@ def load(app):
                 team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
                 if not team_camp_entry:
                     return response
-                
+
                 team_camp = team_camp_entry.camp
-                
+
                 # Vérifier le camp du challenge
                 camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge_id).first()
                 challenge_camp = camp_entry.camp if camp_entry else None
@@ -218,7 +277,7 @@ def load(app):
         def enrich_challenge(challenge):
             """Enrichit un challenge avec son camp"""
             if not hasattr(challenge, 'camp') or challenge.camp is None:
-                camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge_id).first()
+                camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge.id).first()
                 challenge.camp = camp_entry.camp if camp_entry else None
             return challenge
         
