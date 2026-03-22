@@ -43,7 +43,9 @@ A CTFd plugin that creates an **adversarial camp system** (Blue vs Red) with aut
 - Visual camp badge on the `/challenges` page
 
 <br>
-<img width="1215" height="838" alt="Camp Selection" src="https://github.com/user-attachments/assets/31119793-83a6-4f8e-a64c-eba45e293971" />
+
+<img width="1177" height="803" alt="camp" src="https://github.com/user-attachments/assets/4f39ffc5-dc60-4a75-9067-68c187cc2160" />
+
 
 ### 🔒 Access Control
 - **Change deadline**: lock camp changes after a configurable date
@@ -137,7 +139,9 @@ Tables are created automatically on first run.
    - Teams can also choose their own camp at `/camps/select`
 
 <br>
-<img width="1119" height="866" alt="Admin panel" src="https://github.com/user-attachments/assets/9302659f-291e-4c48-9cc8-2c3eb6add179" />
+
+<img width="961" height="828" alt="settings" src="https://github.com/user-attachments/assets/2b70df81-1bd0-4bad-84c2-4157db0e3743" />
+
 
 ### Team Side
 
@@ -157,7 +161,8 @@ Tables are created automatically on first run.
    - Flag submission for another camp's challenge is blocked and logged
 
 <br>
-<img width="1413" height="833" alt="Team view" src="https://github.com/user-attachments/assets/89319a8f-2760-427e-823d-4cdf33bbad66" />
+
+<img width="1431" height="822" alt="chall" src="https://github.com/user-attachments/assets/4dea19c2-e3f2-4c8c-81cb-820f294d4667" />
 
 ### Security Logs
 
@@ -171,7 +176,9 @@ Each log entry contains:
 - Timestamp
 
 <br>
-<img width="1507" height="740" alt="Security logs" src="https://github.com/user-attachments/assets/2d1c7653-b148-4a02-8636-0ff757b2391e" />
+
+<img width="1291" height="872" alt="Security" src="https://github.com/user-attachments/assets/0fcbc88f-f1f7-4673-b549-a84ca3a55503" />
+
 
 ---
 
