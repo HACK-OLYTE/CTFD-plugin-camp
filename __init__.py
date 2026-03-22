@@ -336,7 +336,7 @@ def load(app):
         def enrich_challenge(challenge):
             """Enrichit un challenge avec son camp"""
             if not hasattr(challenge, 'camp') or challenge.camp is None:
-                camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge_id).first()
+                camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge.id).first()
                 challenge.camp = camp_entry.camp if camp_entry else None
             return challenge
         
@@ -358,15 +358,24 @@ def load(app):
             show_badges = get_config('camps_show_challenge_badges', default=False)
             
             if show_badges:
-                # Récupérer les camps de tous les challenges
+                # Récupérer le camp de l'équipe courante
+                team = get_current_team()
+                team_camp = None
+                if team:
+                    team_camp_entry = TeamCamp.query.filter_by(team_id=team.id).first()
+                    team_camp = team_camp_entry.camp if team_camp_entry else None
+
+                # Récupérer les camps des challenges, filtré par camp de l'équipe
                 from CTFd.models import Challenges as ChallengesModel
                 challenges = ChallengesModel.query.filter_by(state='visible').all()
-                
+
                 camps_map = {}
                 for challenge in challenges:
                     camp_entry = ChallengeCamp.query.filter_by(challenge_id=challenge.id).first()
                     if camp_entry:
-                        camps_map[challenge.id] = camp_entry.camp
+                        # Ne pas inclure les challenges de l'autre camp
+                        if team_camp is None or camp_entry.camp == team_camp:
+                            camps_map[challenge.id] = camp_entry.camp
                 
                 # Injecter le script
                 inject_script = f"""
